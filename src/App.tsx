@@ -5,6 +5,29 @@ type Screen = 'welcome' | 'intro' | 'baseline' | 'decision' | 'result'
 
 type Level = 'Low' | 'Medium' | 'High'
 
+export type SelectedConstraint = 'scope' | 'time' | 'cost'
+
+export type ConstraintLevel = 'low' | 'baseline' | 'high'
+
+type ConsequenceMetricKey =
+  | 'risk'
+  | 'timePressure'
+  | 'costPressure'
+  | 'qualityPressure'
+  | 'deliveryConfidence'
+
+type ConsequenceMetrics = Record<ConsequenceMetricKey, Level>
+
+export type ConsequenceResult = {
+  metrics: ConsequenceMetrics
+  explanation: string
+}
+
+type ConstraintConsequenceModel = Record<
+  SelectedConstraint,
+  Record<ConstraintLevel, ConsequenceResult>
+>
+
 type MetricKey =
   | 'risk'
   | 'qualityPressure'
@@ -139,6 +162,127 @@ const progressSteps: { id: Screen; label: string }[] = [
   { id: 'result', label: 'Result' },
 ]
 
+const baselineConstraintOptions: {
+  key: SelectedConstraint
+  label: string
+  positionClass: 'top' | 'left' | 'right'
+}[] = [
+  { key: 'scope', label: 'Scope', positionClass: 'top' },
+  { key: 'time', label: 'Time', positionClass: 'left' },
+  { key: 'cost', label: 'Cost', positionClass: 'right' },
+]
+
+const consequenceLabels: { key: ConsequenceMetricKey; label: string }[] = [
+  { key: 'risk', label: 'Risk' },
+  { key: 'timePressure', label: 'Time pressure' },
+  { key: 'costPressure', label: 'Cost pressure' },
+  { key: 'qualityPressure', label: 'Quality pressure' },
+  { key: 'deliveryConfidence', label: 'Delivery confidence' },
+]
+
+const constraintLevelOptions: { key: ConstraintLevel; label: string }[] = [
+  { key: 'low', label: 'Low' },
+  { key: 'baseline', label: 'Baseline' },
+  { key: 'high', label: 'High' },
+]
+
+const neutralBaselineConsequence: ConsequenceResult = {
+  metrics: {
+    risk: 'Medium',
+    timePressure: 'Medium',
+    costPressure: 'Medium',
+    qualityPressure: 'Medium',
+    deliveryConfidence: 'Medium',
+  },
+  explanation: 'The project remains balanced at its current baseline.',
+}
+
+const baselineConsequenceModel: ConstraintConsequenceModel = {
+  scope: {
+    low: {
+      metrics: {
+        risk: 'Low',
+        timePressure: 'Low',
+        costPressure: 'Low',
+        qualityPressure: 'Low',
+        deliveryConfidence: 'High',
+      },
+      explanation:
+        'Reducing scope usually makes delivery easier, but may reduce business value.',
+    },
+    baseline: neutralBaselineConsequence,
+    high: {
+      metrics: {
+        risk: 'High',
+        timePressure: 'High',
+        costPressure: 'Medium',
+        qualityPressure: 'Medium',
+        deliveryConfidence: 'Low',
+      },
+      explanation:
+        'Increasing scope creates pressure on time and cost and lowers delivery confidence.',
+    },
+  },
+  time: {
+    low: {
+      metrics: {
+        risk: 'High',
+        timePressure: 'High',
+        costPressure: 'Medium',
+        qualityPressure: 'High',
+        deliveryConfidence: 'Low',
+      },
+      explanation: 'Shortening the timeline increases pressure, risk, and quality concerns.',
+    },
+    baseline: neutralBaselineConsequence,
+    high: {
+      metrics: {
+        risk: 'Low',
+        timePressure: 'Low',
+        costPressure: 'Low',
+        qualityPressure: 'Low',
+        deliveryConfidence: 'High',
+      },
+      explanation:
+        'Giving the project more time reduces pressure and improves delivery confidence.',
+    },
+  },
+  cost: {
+    low: {
+      metrics: {
+        risk: 'High',
+        timePressure: 'Medium',
+        costPressure: 'High',
+        qualityPressure: 'High',
+        deliveryConfidence: 'Low',
+      },
+      explanation: 'Cutting budget often increases delivery risk and creates quality pressure.',
+    },
+    baseline: neutralBaselineConsequence,
+    high: {
+      metrics: {
+        risk: 'Low',
+        timePressure: 'Low',
+        costPressure: 'Low',
+        qualityPressure: 'Low',
+        deliveryConfidence: 'High',
+      },
+      explanation: 'Adding budget can protect scope and timeline by increasing capacity.',
+    },
+  },
+}
+
+function getConstraintConsequence(
+  constraint: SelectedConstraint,
+  level: ConstraintLevel,
+): ConsequenceResult {
+  return baselineConsequenceModel[constraint][level]
+}
+
+function formatConstraintLabel(constraint: SelectedConstraint): string {
+  return baselineConstraintOptions.find((option) => option.key === constraint)?.label ?? constraint
+}
+
 type CardProps = {
   label: string
   value: string
@@ -181,10 +325,20 @@ function ProgressStepper({ currentScreen }: { currentScreen: Screen }) {
 function App() {
   const [screen, setScreen] = useState<Screen>('welcome')
   const [selectedDecisionId, setSelectedDecisionId] = useState<DecisionId | null>(null)
+  const [selectedConstraint, setSelectedConstraint] = useState<SelectedConstraint | null>(null)
+  const [selectedConstraintLevel, setSelectedConstraintLevel] = useState<ConstraintLevel>('baseline')
 
   const selectedOutcome = useMemo(
     () => scenario.decisions.find((decision) => decision.id === selectedDecisionId) ?? null,
     [selectedDecisionId],
+  )
+
+  const baselineConsequence = useMemo(
+    () =>
+      selectedConstraint
+        ? getConstraintConsequence(selectedConstraint, selectedConstraintLevel)
+        : null,
+    [selectedConstraint, selectedConstraintLevel],
   )
 
   const handleDecision = (id: DecisionId) => {
@@ -200,6 +354,19 @@ function App() {
   const tryAnotherDecision = () => {
     setSelectedDecisionId(null)
     setScreen('decision')
+  }
+
+  const handleConstraintSelect = (constraint: SelectedConstraint) => {
+    setSelectedConstraint(constraint)
+    setSelectedConstraintLevel('baseline')
+  }
+
+  const handleConstraintLevelChange = (level: ConstraintLevel) => {
+    if (!selectedConstraint) {
+      return
+    }
+
+    setSelectedConstraintLevel(level)
   }
 
   const renderScreen = () => {
@@ -248,10 +415,62 @@ function App() {
             <h3>Triple Constraint</h3>
             <div className="triangle-box" aria-label="Scope, Time, Cost constraint panel">
               <div className="triangle-shape" />
-              <span className="triangle-point top">Scope</span>
-              <span className="triangle-point left">Time</span>
-              <span className="triangle-point right">Cost</span>
+              {baselineConstraintOptions.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  className={`triangle-point triangle-point-btn ${option.positionClass} ${
+                    selectedConstraint === option.key ? 'is-active' : ''
+                  }`}
+                  onClick={() => handleConstraintSelect(option.key)}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
+
+            <section className="constraint-action-panel card" aria-label="Constraint action panel">
+              <p className="card-label">Constraint experiment</p>
+              <p className="constraint-selected">
+                Selected constraint:{' '}
+                <strong>
+                  {selectedConstraint ? formatConstraintLabel(selectedConstraint) : 'Choose one'}
+                </strong>
+              </p>
+              <div className="constraint-level-control" aria-label="Constraint level control">
+                {constraintLevelOptions.map((option) => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    className={`constraint-level-option ${
+                      selectedConstraintLevel === option.key ? 'is-selected' : ''
+                    }`}
+                    onClick={() => handleConstraintLevelChange(option.key)}
+                    disabled={!selectedConstraint}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <p className="constraint-level-hint">
+                Current level: <strong>{selectedConstraintLevel}</strong>
+              </p>
+            </section>
+
+            {baselineConsequence && (
+              <section className="constraint-consequence-panel card" aria-label="Consequence preview">
+                <p className="card-label">Consequence preview</p>
+                <div className="constraint-consequence-grid">
+                  {consequenceLabels.map((item) => (
+                    <article key={item.key} className="constraint-consequence-item">
+                      <p className="constraint-metric-label">{item.label}</p>
+                      <StatusBadge value={baselineConsequence.metrics[item.key]} />
+                    </article>
+                  ))}
+                </div>
+                <p className="body-text constraint-explanation">{baselineConsequence.explanation}</p>
+              </section>
+            )}
           </div>
 
           <button className="btn btn-primary" onClick={() => setScreen('decision')}>

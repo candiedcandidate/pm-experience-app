@@ -340,6 +340,29 @@ h3 {
   box-shadow: 0 5px 10px rgba(13, 48, 79, 0.08);
 }
 
+.triangle-point-btn {
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease,
+    transform 160ms ease, box-shadow 160ms ease;
+}
+
+.triangle-point-btn:hover {
+  transform: translateY(-1px);
+  border-color: #aac7de;
+}
+
+.triangle-point-btn:focus-visible {
+  outline: 3px solid rgba(31, 143, 112, 0.3);
+  outline-offset: 2px;
+}
+
+.triangle-point-btn.is-active {
+  color: #ffffff;
+  background: var(--brand-blue);
+  border-color: var(--brand-blue-strong);
+  box-shadow: 0 8px 16px rgba(15, 94, 167, 0.22);
+}
+
 .triangle-point.top {
   top: 8px;
 }
@@ -352,6 +375,111 @@ h3 {
 .triangle-point.right {
   right: 20%;
   bottom: 12px;
+}
+
+.constraint-action-panel {
+  margin-top: var(--space-4);
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+}
+
+.constraint-selected {
+  margin: var(--space-2) 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.constraint-selected strong {
+  color: #153a5b;
+}
+
+.constraint-level-control {
+  margin-top: var(--space-3);
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: #f1f7fd;
+}
+
+.constraint-level-option {
+  flex: 1;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--brand-blue-strong);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.constraint-level-option:hover:not(:disabled) {
+  background: #e6f0fa;
+  transform: translateY(-1px);
+}
+
+.constraint-level-option:focus-visible {
+  outline: 3px solid rgba(31, 143, 112, 0.3);
+  outline-offset: 2px;
+}
+
+.constraint-level-option:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.constraint-level-option.is-selected {
+  color: #ffffff;
+  background: linear-gradient(118deg, var(--brand-blue) 0%, var(--brand-green) 100%);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 16px rgba(15, 94, 167, 0.2);
+}
+
+.constraint-level-hint {
+  margin: var(--space-2) 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.constraint-level-hint strong {
+  text-transform: capitalize;
+  color: #173a5c;
+}
+
+.constraint-consequence-panel {
+  margin-top: var(--space-3);
+}
+
+.constraint-consequence-grid {
+  margin-top: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.constraint-consequence-item {
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 0.7rem 0.75rem;
+  background: #ffffff;
+}
+
+.constraint-metric-label {
+  margin: 0;
+  color: #35536f;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.constraint-consequence-item .status-pill {
+  margin-top: 0.45rem;
+}
+
+.constraint-explanation {
+  margin-top: var(--space-3);
 }
 
 .event-box {
@@ -495,6 +623,10 @@ h3 {
   .comparison-values {
     justify-content: flex-start;
   }
+
+  .constraint-consequence-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 860px) {
@@ -519,6 +651,20 @@ h3 {
 
   .triangle-point.right {
     right: 8%;
+  }
+
+  .constraint-level-control {
+    gap: 0.25rem;
+  }
+
+  .constraint-level-option {
+    min-width: 0;
+    padding: 0.48rem 0.55rem;
+    font-size: 0.8rem;
+  }
+
+  .constraint-consequence-grid {
+    grid-template-columns: 1fr;
   }
 
   .actions-row {
